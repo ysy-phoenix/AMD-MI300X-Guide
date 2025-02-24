@@ -20,8 +20,8 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ### Step 3: Install vLLM
 
 ```bash
-git clone https://github.com/vllm-project/vllm.git
-cd vllm
+git clone https://github.com/vllm-project/vllm.git vllm-sglang
+cd vllm-sglang
 git checkout v0.6.6.post1
 sudo ~/miniconda3/envs/sglang/bin/pip install /opt/rocm/share/amd_smi
 pip install --upgrade numba scipy "huggingface-hub[cli]"
@@ -43,9 +43,9 @@ VLLM_TARGET_DEVICE=rocm MAX_JOBS=96 python3 setup.py develop
 
 ```bash
 pip install ninja IPython orjson python-multipart torchao pybind11
-git clone https://github.com/triton-lang/triton.git
+git clone https://github.com/ROCm/triton.git
 cd triton
-git checkout 845d75a
+git checkout improve_fa_decode_3.0.0
 cd python
 MAX_JOBS=96 python3 setup.py install
 ```
@@ -53,8 +53,9 @@ MAX_JOBS=96 python3 setup.py install
 ### Step 5: Install ater
 
 ```bash
-git clone https://github.com/HaiShaw/ater.git
+git clone https://github.com/ROCm/aiter.git
 cd ater
+git checkout dev/testx
 git submodule update --init --recursive
 PREBUILD_KERNELS=1 GPU_ARCHS=gfx942 MAX_JOBS=96 python3 setup.py develop
 ```
@@ -63,7 +64,7 @@ PREBUILD_KERNELS=1 GPU_ARCHS=gfx942 MAX_JOBS=96 python3 setup.py develop
 
 ```bash
 # Use the last release branch
-git clone -b v0.4.2.post4 https://github.com/sgl-project/sglang.git
+git clone -b v0.4.3.post2 https://github.com/sgl-project/sglang.git
 cd sglang
 cd sgl-kernel
 MAX_JOBS=96 python setup_rocm.py install
@@ -88,6 +89,21 @@ for file in *.json; do
     new_file="N=${N},K=${K},device_name=AMD_Instinct_MI300X_VF,dtype=${dtype},block_shape=${block_shape}.json"
     cp "$file" "$new_file"
 done
+
+# Performance optimization
+export HIP_FORCE_DEV_KERNARG=1
+export HSA_NO_SCRATCH_RECLAIM=1
+export SGLANG_SET_CPU_AFFINITY=1
+export SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN=1
+export NCCL_MIN_NCHANNELS=112
+
+export MOE_PADDING=1
+export VLLM_FP8_PADDING=1
+export VLLM_FP8_ACT_PADDING=1
+export VLLM_FP8_WEIGHT_PADDING=1
+export VLLM_FP8_REDUCE_CONV=1
+export TORCHINDUCTOR_MAX_AUTOTUNE=1
+export TORCHINDUCTOR_MAX_AUTOTUNE_POINTWISE=1
 ```
 
 > [!TIP]
